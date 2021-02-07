@@ -1,4 +1,4 @@
-package com.example.adsclicks.services;
+package com.example.adsclicks.loaders;
 
 import com.example.adsclicks.models.AdData;
 import com.opencsv.bean.CsvToBeanBuilder;
@@ -13,15 +13,13 @@ import java.util.List;
 @Service
 public class AdsDataLoader {
     public static final String ADS_DATA_FILE_NAME = "ads-data.csv";
-    private final List<AdData> adsData;
 
-    public AdsDataLoader() {
-        this.adsData = Collections.unmodifiableList(loadAdsDataFromCsv(ADS_DATA_FILE_NAME));
-        System.out.println("Data loaded");
-    }
-
-    public List<AdData> getAdsData() {
-        return adsData;
+    /**
+     * Loads ads data
+     * @return ads data
+     */
+    public List<AdData> loadAdsData() {
+        return Collections.unmodifiableList(loadAdsDataFromCsv(ADS_DATA_FILE_NAME));
     }
 
     private List<AdData> loadAdsDataFromCsv(String fileName) {

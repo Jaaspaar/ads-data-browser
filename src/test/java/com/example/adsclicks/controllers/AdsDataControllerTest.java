@@ -2,7 +2,7 @@ package com.example.adsclicks.controllers;
 
 
 import com.example.adsclicks.models.AdData;
-import com.example.adsclicks.services.AdsDataLoader;
+import com.example.adsclicks.services.AdsDataService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,7 +35,7 @@ public class AdsDataControllerTest {
     private MockMvc mvc;
 
     @MockBean
-    private AdsDataLoader adsDataLoader;
+    private AdsDataService adsDataService;
 
     @Before
     public void setUp() throws ParseException {
@@ -46,7 +46,7 @@ public class AdsDataControllerTest {
             new AdData("Twitter Ads", "Adventmarkt Touristik", 7, 1000, dateFormat.parse("11-12-18")),
             new AdData("Twitter Ads", "GDN_Retargeting", 27, 2000, dateFormat.parse("11-12-20"))
         );
-        Mockito.when(adsDataLoader.getAdsData()).thenReturn(adsData);
+        Mockito.when(adsDataService.getAdsData()).thenReturn(adsData);
     }
 
     @Test
