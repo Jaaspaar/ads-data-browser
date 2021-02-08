@@ -3,7 +3,7 @@
 Application exposes generic endpoint to query ads data.
 
 ### Exemplary instance
-An exemplary instance is hosted at https://ads-data-browser.ew.r.appspot.com
+An exemplary instance is hosted at Google Cloud.
 
 ### Swagger UI
 Swagger UI can be accessed at https://ads-data-browser.ew.r.appspot.com/swagger-ui/#/ads-data-controller/getMetricUsingGET
@@ -34,4 +34,6 @@ https://ads-data-browser.ew.r.appspot.com/ads/IMPRESSIONS/?groupingType=DATE
    computing result of all aggregation functions for every call
    
 3. Fix date formatting in output to exclude time part
+   
+4. Add custom error page
 4. Improve code documentation (Javadoc) and swagger documentation
