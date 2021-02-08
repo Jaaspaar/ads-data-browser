@@ -10,6 +10,9 @@ import org.springframework.web.bind.annotation.*;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 
@@ -39,7 +42,7 @@ public class AdsDataController {
             @RequestParam(required = false) String dataSource,
             @RequestParam(required = false) String campaign,
             @RequestParam (required = false) @DateTimeFormat(pattern = "MM-dd-yy") @ApiParam(example = "11-22-18") Date startDate,
-            @RequestParam (required = false) @DateTimeFormat(pattern = "MM-dd-yy") @ApiParam(example = "11-22-20") Date endDate) {
+            @RequestParam (required = false) @DateTimeFormat(pattern = "MM-dd-yy") @ApiParam(example = "11-22-20") Date endDate) throws ExecutionException, InterruptedException {
 
         Collector<AdData, ?, ?> metricCollector = getMetricCollector(metric);
         Stream<AdData> filteredAdsData = getFilteredAdsData(dataSource, campaign, startDate, endDate);
@@ -51,23 +54,23 @@ public class AdsDataController {
         return getGroupedResult(groupingType, metricCollector, filteredAdsData);
     }
 
-    private Map<? extends Serializable, ?> getGroupedResult(GroupingType groupingType, Collector<AdData, ?, ?> metricCollector, Stream<AdData> filteredAdsData) {
+    private Map<? extends Serializable, ?> getGroupedResult(GroupingType groupingType, Collector<AdData, ?, ?> metricCollector, Stream<AdData> filteredAdsData) throws ExecutionException, InterruptedException {
         switch (groupingType) {
             case DATA_SOURCE_THAN_CAMPAIGN:
-                return filteredAdsData
-                        .collect(groupingBy(AdData::getDataSource, groupingBy(AdData::getCampaign, metricCollector)));
+                return runStreamOnCustomThreadPool( () -> filteredAdsData
+                        .collect(groupingBy(AdData::getDataSource, groupingBy(AdData::getCampaign, metricCollector))));
             case CAMPAIGN_THAN_DATA_SOURCE:
-                return filteredAdsData
-                        .collect(groupingBy(AdData::getCampaign, groupingBy(AdData::getDataSource, metricCollector)));
+                return runStreamOnCustomThreadPool( () -> filteredAdsData
+                        .collect(groupingBy(AdData::getCampaign, groupingBy(AdData::getDataSource, metricCollector))));
             case DATA_SOURCE:
-                return filteredAdsData
-                        .collect(groupingBy(AdData::getDataSource, metricCollector));
+                return runStreamOnCustomThreadPool( () -> filteredAdsData
+                        .collect(groupingBy(AdData::getDataSource, metricCollector)));
             case CAMPAIGN:
-                return filteredAdsData
-                        .collect(groupingBy(AdData::getCampaign, metricCollector));
+                return runStreamOnCustomThreadPool( () -> filteredAdsData
+                        .collect(groupingBy(AdData::getCampaign, metricCollector)));
             default:
-                return filteredAdsData
-                        .collect(groupingBy(AdData::getDate, metricCollector));
+                return runStreamOnCustomThreadPool( () -> filteredAdsData
+                        .collect(groupingBy(AdData::getDate, metricCollector)));
         }
     }
 
@@ -84,11 +87,17 @@ public class AdsDataController {
 
     private Stream<AdData> getFilteredAdsData(String dataSource, String campaign, Date startDate, Date endDate) {
         return adsDataService.getAdsData()
-                .stream()
+                .parallelStream()
                 .filter(adData -> (dataSource == null || adData.getDataSource().equals(dataSource)) &&
                         (campaign == null || adData.getCampaign().equals(campaign)) &&
                         (startDate == null || adData.getDate().after(startDate)) &&
                         (endDate == null || adData.getDate().before(endDate)));
+    }
+
+    private Map<? extends Serializable, ?> runStreamOnCustomThreadPool(Callable<Map<? extends Serializable, ?>> runStream) throws ExecutionException, InterruptedException {
+        int coresNumber = Runtime.getRuntime().availableProcessors();
+        ForkJoinPool customThreadPool = new ForkJoinPool(coresNumber);
+        return customThreadPool.submit(runStream).get();
     }
 }
 

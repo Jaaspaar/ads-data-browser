@@ -4,8 +4,7 @@ import com.example.adsclicks.models.AdData;
 import com.opencsv.bean.CsvToBeanBuilder;
 import org.springframework.stereotype.Service;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Collections;
 import java.util.List;
@@ -23,17 +22,13 @@ public class AdsDataLoader {
     }
 
     private List<AdData> loadAdsDataFromCsv(String fileName) {
-        try {
-            CsvToBeanBuilder<AdData> beanBuilder = new CsvToBeanBuilder<>(new InputStreamReader(new FileInputStream(fileName)));
+        ClassLoader classloader = Thread.currentThread().getContextClassLoader();
+        InputStream inputStream = classloader.getResourceAsStream(fileName);
+        CsvToBeanBuilder<AdData> beanBuilder = new CsvToBeanBuilder<>(new InputStreamReader(inputStream));
 
-            return beanBuilder
-                    .withType(AdData.class)
-                    .build()
-                    .parse();
-        } catch (FileNotFoundException e) {
-            System.out.println(e.getMessage());
-        }
-
-        return null;
+        return beanBuilder
+                .withType(AdData.class)
+                .build()
+                .parse();
     };
 }
